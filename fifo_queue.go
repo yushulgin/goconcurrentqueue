@@ -99,7 +99,7 @@ func (st *FIFO) Dequeue() (interface{}, error) {
 }
 
 // Dequeue dequeues an N count element. Returns error if queue is locked or empty.
-func (st *FIFO) DequeueN(count uint) (interface{}, error) {
+func (st *FIFO) DequeueN(count uint) ([]interface{}, error) {
 	if st.isLocked {
 		return nil, NewQueueError(QueueErrorCodeLockedQueue, "The queue is locked")
 	}
