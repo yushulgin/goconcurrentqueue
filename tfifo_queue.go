@@ -73,6 +73,27 @@ func (st *TFIFO[T]) Enqueue(value T) error {
 	return nil
 }
 
+func (st *TFIFO[T]) EnqueueN(value []T) error {
+	if st.isLocked {
+		return NewQueueError(QueueErrorCodeLockedQueue, "The queue is locked")
+	}
+
+	// let consumers (DequeueOrWaitForNextElement) know there is a new element
+	select {
+	case st.unlockDequeueOrWaitForNextElementChan <- struct{}{}:
+	default:
+		// message could not be sent
+	}
+
+	// lock the object to enqueue the element into the slice
+	st.rwmutex.Lock()
+	// enqueue the element
+	st.slice = append(st.slice, value...)
+	defer st.rwmutex.Unlock()
+
+	return nil
+}
+
 // Dequeue dequeues an element. Returns error if queue is locked or empty.
 func (st *TFIFO[T]) Dequeue() (T, error) {
 	var emptyRes T
